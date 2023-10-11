@@ -1,21 +1,19 @@
 import pygame
 import random
-from scipy.spatial import Voronoi
-import numpy as np
-from perlin import Perlin
-import math
+from scipy.spatial import Voronoi  # main algorithm for building Voronoi diagram
+from Classes import Dot  # Get DOT class
 
 pygame.init()
 
-"""settings"""
+"""SETTINGS"""
 n_dots = 200
 background_color = (39, 40, 41)
 dots_color = (255, 246, 224)
 polygon_color = (255, 246, 224)
 
 """display part"""
-display_width = 1920
-display_height = 1080
+display_width = 1920  # change this to your preferences
+display_height = 1080  # change this to your preferences
 
 display = pygame.display.set_mode((display_width, display_height))
 pygame.display.set_caption("Polygon")
@@ -26,6 +24,10 @@ FPS = 60
 
 
 def crate_dots():
+    """
+    create list of dots with defined position, color and radius
+    """
+
     dots = []
     for i in range(n_dots):
         rand_pos = (random.uniform(-50, display_width + 50), random.uniform(-50, display_height + 50))
@@ -35,74 +37,36 @@ def crate_dots():
     return dots
 
 
-def create_direction():
-    v = np.random.rand(2)
-    normalized_v = v / np.sqrt(np.sum(v ** 2))
-    return normalized_v
-
-
 def draw_polygons(dots):
+    """
+    Main algorithm for building Voronoi diagram
+    Get polygon vertices and draw polygons from them
+    For more information read about scipy.spatial.voronoi
+    """
+
     vor = Voronoi([dot.position for dot in dots], incremental=True)
     pol_edges = vor.vertices
     regions = vor.regions
 
     for region in regions:
 
-        points = []
+        points = []  # get list of vertices for each vertices
         for i in range(len(region)):
-            if region[i] != -1:
+            if region[i] != -1:  # if polygon vertex not in infinity
                 points.append(pol_edges[region[i]])
 
-        if len(points) > 2:
+        if len(points) > 2:  # if there are more than 2 vertices
             pygame.draw.polygon(display, polygon_color, points, 5)
 
 
-class Dot:
-    def __init__(self, position, color, radius):
-        self.position = position
-        self.color = color
-        self.radius = radius
-        self.direction = (np.random.rand(2) - 0.5)
-        self.noise = Perlin(6789)
-
-    def update(self, surf):
-        
-        self.position += self.direction
-
-        # sometimes rotate direction vector
-        if random.random() > 0.8:
-            self.rotate_direction()
-
-        # deflect direction vector from edges of field
-        if self.position[0] < -50:
-            self.position[0] = -50
-            self.direction[0] *= -1
-        if self.position[0] > display_width + 50:
-            self.position[0] = display_width + 50
-            self.direction[0] *= -1
-        if self.position[1] < -50:
-            self.position[1] = -50
-            self.direction[1] *= -1
-        if self.position[1] > display_height + 50:
-            self.position[1] = display_height + 50
-            self.direction[1] *= -1
-
-        # pygame.draw.circle(surf, self.color, self.position, self.radius)
-
-    def rotate_direction(self):
-        """slightly rotate direction vector based on perlin noise"""
-        rand_angle = self.noise.one(pygame.time.get_ticks()) / 100
-        x = self.direction[0] * math.cos(rand_angle) - self.direction[1] * math.sin(rand_angle)
-        y = self.direction[0] * math.sin(rand_angle) + self.direction[1] * math.cos(rand_angle)
-
-        self.direction = [round(x, 2), round(y, 2)]
-
-
 def main():
-    in_game = True
+    """
+    Main loop
+    """
 
     dots = crate_dots()
 
+    in_game = True
     while in_game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -110,9 +74,11 @@ def main():
 
         display.fill(background_color)
 
+        """update dots"""
         for dot in dots:
             dot.update(display)
 
+        """draw polygons from dots"""
         draw_polygons(dots)
 
         """display update"""
