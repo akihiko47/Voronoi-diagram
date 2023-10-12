@@ -9,7 +9,6 @@ pygame.init()
 n_dots = 200
 background_color = (0, 0, 0)
 dots_color = (255, 246, 224)
-polygon_color = (255, 246, 224)
 
 """display part"""
 display_width = 1920  # change this to your preferences
