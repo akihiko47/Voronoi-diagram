@@ -7,7 +7,7 @@ pygame.init()
 
 """SETTINGS"""
 n_dots = 200
-background_color = (39, 40, 41)
+background_color = (0, 0, 0)
 dots_color = (255, 246, 224)
 polygon_color = (255, 246, 224)
 
@@ -50,13 +50,30 @@ def draw_polygons(dots):
 
     for region in regions:
 
-        points = []  # get list of vertices for each vertices
+        points = []  # get list of vertices for each polygon
         for i in range(len(region)):
             if region[i] != -1:  # if polygon vertex not in infinity
-                points.append(pol_edges[region[i]])
+                point = pol_edges[region[i]]
+                points.append(point)
 
         if len(points) > 2:  # if there are more than 2 vertices
-            pygame.draw.polygon(display, polygon_color, points, 5)
+
+            """Get color value from polygon Y coordinate"""
+            old_value = sum([p[1] for p in points]) / len(points)  # polygon Y value (mean from vertices)
+            old_min = -50  # minimal possible Y
+            old_max = display_height + 50  # maximum possible Y
+            new_min = 0  # minimal color value that we need
+            new_max = 120  # maximum color value that we need
+            new_value = ((old_value - old_min) / (old_max - old_min)) * (new_max - new_min) + new_min
+
+            """Restrict color value to range"""
+            if new_value < 0:
+                new_value = 0
+            if new_value > new_max:
+                new_value = new_max
+
+            color = (200, new_value, 20)
+            pygame.draw.polygon(display, color, points, 10)
 
 
 def main():
