@@ -6,9 +6,9 @@ from Classes import Dot  # Get DOT class
 pygame.init()
 
 """SETTINGS"""
-n_dots = 200
-background_color = (0, 0, 0)
-dots_color = (255, 246, 224)
+n_dots = 150
+background_color = (0, 8, 8)
+dots_color = (255, 246, 224)  # uncomment draw line in Dot class (Classes.py)
 
 """display part"""
 display_width = 1920  # change this to your preferences
@@ -36,33 +36,28 @@ def crate_dots():
     return dots
 
 
-def draw_polygons(dots):
+def draw_lines(dots):
     """
     Main algorithm for building Voronoi diagram
-    Get polygon vertices and draw polygons from them
+    Get polygon vertices and draw lines from them
     For more information read about scipy.spatial.voronoi
     """
 
     vor = Voronoi([dot.position for dot in dots], incremental=True)
-    pol_edges = vor.vertices
-    regions = vor.regions
+    pol_vertices = vor.vertices
+    pol_lines_indices = vor.ridge_vertices
 
-    for region in regions:
+    for pnt1_index, pnt2_index in pol_lines_indices:
+        if pnt1_index != -1 and pnt2_index != -1:
+            pnt1_cords = pol_vertices[pnt1_index]
+            pnt2_cords = pol_vertices[pnt2_index]
 
-        points = []  # get list of vertices for each polygon
-        for i in range(len(region)):
-            if region[i] != -1:  # if polygon vertex not in infinity
-                point = pol_edges[region[i]]
-                points.append(point)
-
-        if len(points) > 2:  # if there are more than 2 vertices
-
-            """Get color value from polygon Y coordinate"""
-            old_value = sum([p[1] for p in points]) / len(points)  # polygon Y value (mean from vertices)
+            """Get color value from line Y coordinate"""
+            old_value = (pnt1_cords[1] + pnt2_cords[1]) / 2  # mean Y value of 2 dots
             old_min = -50  # minimal possible Y
             old_max = display_height + 50  # maximum possible Y
             new_min = 0  # minimal color value that we need
-            new_max = 120  # maximum color value that we need
+            new_max = 255  # maximum color value that we need
             new_value = ((old_value - old_min) / (old_max - old_min)) * (new_max - new_min) + new_min
 
             """Restrict color value to range"""
@@ -71,8 +66,15 @@ def draw_polygons(dots):
             if new_value > new_max:
                 new_value = new_max
 
-            color = (200, new_value, 20)
-            pygame.draw.polygon(display, color, points, 10)
+            """Create color to this line from its Y value"""
+            color = (new_value, 200, 255 - new_value)
+
+            """Draw line"""
+            pygame.draw.line(display, color, pnt1_cords, pnt2_cords, 15)  # big line
+            pygame.draw.line(display, background_color, pnt1_cords, pnt2_cords, 5)  # small line in middle
+
+            pygame.draw.circle(display, color, pnt1_cords, 10)  # circle in connections
+            pygame.draw.circle(display, color, pnt2_cords, 10)  # circle in connections
 
 
 def main():
@@ -94,8 +96,8 @@ def main():
         for dot in dots:
             dot.update(display)
 
-        """draw polygons from dots"""
-        draw_polygons(dots)
+        """draw lines from dots"""
+        draw_lines(dots)
 
         """display update"""
         clock.tick(FPS)
@@ -104,7 +106,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
